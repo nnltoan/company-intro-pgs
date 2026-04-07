@@ -1,0 +1,5038 @@
+
+window.onload = function() {
+  // Build a system
+  var url = window.location.search.match(/url=([^&]+)/);
+  if (url && url.length > 1) {
+    url = decodeURIComponent(url[1]);
+  } else {
+    url = window.location.origin;
+  }
+  var options = {
+  "swaggerDoc": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "API Documentation",
+      "version": "1.0.0",
+      "description": "Comprehensive API documentation for the application."
+    },
+    "servers": [
+      {
+        "url": "http://localhost:5001/v1",
+        "description": "Local server"
+      }
+    ],
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer",
+          "bearerFormat": "JWT"
+        }
+      },
+      "schemas": {
+        "Location": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Location ID",
+              "example": "loc123"
+            },
+            "address": {
+              "type": "string",
+              "description": "Address of the location",
+              "example": "123 Main St, Hanoi"
+            },
+            "datetime_from": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Start time of the location",
+              "example": "2025-05-15T12:00:00Z"
+            },
+            "datetime_to": {
+              "type": "string",
+              "format": "date-time",
+              "description": "End time of the location",
+              "example": "2025-05-15T14:00:00Z"
+            },
+            "latitude": {
+              "type": "number",
+              "description": "Latitude coordinate",
+              "example": 10.7769
+            },
+            "longitude": {
+              "type": "number",
+              "description": "Longitude coordinate",
+              "example": 106.7009
+            },
+            "battery_level": {
+              "type": "number",
+              "description": "Battery level at the location",
+              "example": 80
+            }
+          }
+        },
+        "UserResponse": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "User ID",
+              "example": "user123"
+            },
+            "name": {
+              "type": "string",
+              "description": "User's name",
+              "example": "John Doe"
+            },
+            "photo_url": {
+              "type": "string",
+              "nullable": true,
+              "description": "URL of user's profile photo",
+              "example": "https://example.com/photo.jpg"
+            },
+            "email": {
+              "type": "string",
+              "description": "User's email",
+              "example": "john.doe@example.com"
+            },
+            "battery_level": {
+              "type": "number",
+              "description": "User's device battery level",
+              "example": 80
+            },
+            "current_location": {
+              "$ref": "#/components/schemas/Location",
+              "nullable": true,
+              "description": "User's current location"
+            },
+            "share_link_expires_at": {
+              "type": "string",
+              "nullable": true,
+              "description": "Expiry time of share link",
+              "example": "2025-05-15T12:00:00Z"
+            }
+          }
+        },
+        "ProviderResponse": {
+          "type": "object",
+          "properties": {
+            "providers": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "facebook",
+                  "google",
+                  "apple",
+                  "local"
+                ]
+              },
+              "description": "List of providers linked to the user",
+              "example": [
+                "local",
+                "facebook"
+              ]
+            },
+            "email": {
+              "type": "string",
+              "description": "User's email",
+              "example": "john.doe@example.com"
+            }
+          }
+        },
+        "ShareLinkResponse": {
+          "type": "object",
+          "properties": {
+            "share_link": {
+              "type": "string",
+              "description": "Share link",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            },
+            "expires_at": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Expiry time of the share link",
+              "example": "2025-05-15T12:30:00Z"
+            }
+          }
+        },
+        "ErrorResponse": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "failure"
+              ],
+              "example": "failure"
+            },
+            "error": {
+              "type": "string",
+              "description": "Error message",
+              "example": "user_not_found"
+            }
+          }
+        },
+        "SuccessResponse": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "success"
+              ],
+              "example": "success"
+            },
+            "data": {
+              "type": "object",
+              "description": "Response data"
+            },
+            "meta": {
+              "type": "object",
+              "description": "Metadata (optional)",
+              "nullable": true
+            }
+          }
+        },
+        "ZoneMemberResponse": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Member's user ID",
+              "example": "user123"
+            },
+            "name": {
+              "type": "string",
+              "description": "Member's name",
+              "example": "John Doe"
+            },
+            "photo_url": {
+              "type": "string",
+              "nullable": true,
+              "description": "URL of member's profile photo",
+              "example": "https://example.com/photo.jpg"
+            }
+          }
+        },
+        "ZoneResponse": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Zone ID",
+              "example": "zone123"
+            },
+            "zone_name": {
+              "type": "string",
+              "description": "Name of the security zone",
+              "example": "Home Zone"
+            },
+            "longitude": {
+              "type": "number",
+              "description": "Longitude of the zone's center",
+              "example": 106.7009
+            },
+            "latitude": {
+              "type": "number",
+              "description": "Latitude of the zone's center",
+              "example": 10.7769
+            },
+            "zone_range": {
+              "type": "number",
+              "description": "Radius of the zone in meters",
+              "example": 100
+            },
+            "alert_condition": {
+              "type": "string",
+              "enum": [
+                "all",
+                "entering",
+                "leaving"
+              ],
+              "description": "Condition for triggering alerts",
+              "example": "all"
+            },
+            "address": {
+              "type": "string",
+              "description": "Address of the zone",
+              "example": "123 Main St, Hanoi"
+            }
+          }
+        },
+        "AlertHistoryResponse": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Alert history ID",
+              "example": "alert123"
+            },
+            "member": {
+              "$ref": "#/components/schemas/ZoneMemberResponse",
+              "description": "Member who triggered the alert"
+            },
+            "zone": {
+              "$ref": "#/components/schemas/ZoneResponse",
+              "description": "Security zone associated with the alert"
+            },
+            "event": {
+              "type": "string",
+              "enum": [
+                "entering",
+                "leaving"
+              ],
+              "description": "Type of alert event",
+              "example": "entering"
+            },
+            "date_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Timestamp of the alert",
+              "example": "2025-05-15T12:00:00Z"
+            },
+            "condition": {
+              "type": "string",
+              "enum": [
+                "all",
+                "entering",
+                "leaving"
+              ],
+              "description": "Alert condition at the time of the event",
+              "example": "all"
+            }
+          }
+        },
+        "DeviceLocation": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Location ID",
+              "example": "loc123",
+              "nullable": true
+            },
+            "address": {
+              "type": "string",
+              "description": "Address of the location",
+              "example": "123 Main St, Hanoi"
+            },
+            "datetime_from": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Start time of the location",
+              "example": "2025-05-15T12:00:00Z"
+            },
+            "datetime_to": {
+              "type": "string",
+              "format": "date-time",
+              "description": "End time of the location",
+              "example": "2025-05-15T14:00:00Z",
+              "nullable": true
+            },
+            "latitude": {
+              "type": "number",
+              "description": "Latitude coordinate",
+              "example": 10.7769
+            },
+            "longitude": {
+              "type": "number",
+              "description": "Longitude coordinate",
+              "example": 106.7009
+            }
+          }
+        },
+        "Device": {
+          "type": "object",
+          "properties": {
+            "device_id": {
+              "type": "string",
+              "description": "Device ID",
+              "example": "device123"
+            },
+            "current_location": {
+              "$ref": "#/components/schemas/DeviceLocation",
+              "description": "Current location of the device",
+              "nullable": true
+            },
+            "device_name": {
+              "type": "string",
+              "description": "Name of the device",
+              "example": "My iPhone"
+            },
+            "last_connected_at": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Last time the device was connected",
+              "example": "2025-05-15T12:00:00Z"
+            },
+            "mac_address": {
+              "type": "string",
+              "description": "MAC address of the device",
+              "example": "00:1A:2B:3C:4D:5E"
+            },
+            "is_support_play_sound": {
+              "type": "boolean",
+              "description": "Whether the device supports playing sound",
+              "example": true
+            },
+            "device_category": {
+              "type": "string",
+              "enum": [
+                "personal",
+                "bluetooth_audio",
+                "wearable",
+                "iot"
+              ],
+              "description": "Category of the device",
+              "example": "personal"
+            },
+            "device_type": {
+              "type": "string",
+              "enum": [
+                "iPhone",
+                "iPad",
+                "MacBook",
+                "Mac",
+                "airpods",
+                "airpods_pro",
+                "airpods_max",
+                "sony_headphones",
+                "bose_headphones",
+                "jabra_headphones",
+                "sennheiser_headphones",
+                "jbl_speaker",
+                "bose_speaker",
+                "sony_speaker",
+                "marshall_speaker",
+                "ue_boom_speaker",
+                "apple_watch",
+                "garmin",
+                "fitbit",
+                "xiaomi_mi_band",
+                "airtag"
+              ],
+              "description": "Type of the device",
+              "example": "iPhone"
+            },
+            "is_connected": {
+              "type": "boolean",
+              "description": "Whether the device is currently connected",
+              "example": true
+            }
+          }
+        },
+        "DeletionCallback": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "description": "URL to check deletion status",
+              "example": "http://localhost:3000/facebook/deletion?id=12345678"
+            },
+            "confirmation_code": {
+              "type": "string",
+              "description": "Confirmation code for deletion request",
+              "example": 12345678
+            }
+          }
+        },
+        "DeletionStatus": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "COMPLETED",
+                "NOT_FOUND_DELETION_REQUEST"
+              ],
+              "description": "Status of the deletion request",
+              "example": "PENDING"
+            },
+            "message": {
+              "type": "string",
+              "description": "Message describing the deletion status",
+              "example": "Your deletion request is being processed. Your data will be permanently deleted in 29 days."
+            }
+          }
+        },
+        "FacebookPayloadResponse": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Facebook user ID",
+              "example": "fb123456",
+              "nullable": true
+            },
+            "email": {
+              "type": "string",
+              "description": "User's email",
+              "example": "john.doe@example.com"
+            },
+            "name": {
+              "type": "string",
+              "description": "User's name",
+              "example": "John Doe"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "bearerAuth": []
+      }
+    ],
+    "paths": {
+      "/auth/register": {
+        "post": {
+          "summary": "Register a new user",
+          "tags": [
+            "Auth"
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "email",
+                    "password",
+                    "name"
+                  ],
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "example": "john.doe@example.com"
+                    },
+                    "password": {
+                      "type": "string",
+                      "description": "Must contain at least 6 characters, one uppercase, one lowercase, one number, and one special character",
+                      "example": "Password123!"
+                    },
+                    "name": {
+                      "type": "string",
+                      "example": "John Doe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "User registered successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "$ref": "#/components/schemas/UserResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid input",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Email already in use",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/auth/check-email": {
+        "post": {
+          "summary": "Check if email is available and send verification code",
+          "tags": [
+            "Auth"
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "email"
+                  ],
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "example": "john.doe@example.com"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Verification code sent",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Email already in use",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/auth/verify-email": {
+        "post": {
+          "summary": "Verify email with code",
+          "tags": [
+            "Auth"
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "email",
+                    "code"
+                  ],
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "example": "john.doe@example.com"
+                    },
+                    "code": {
+                      "type": "string",
+                      "example": 123456
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Email verified successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid code or email",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/auth/forgot": {
+        "post": {
+          "summary": "Request password reset",
+          "tags": [
+            "Auth"
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "email"
+                  ],
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "example": "john.doe@example.com"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Password reset code sent",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Email not associated with a local provider",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/auth/forgot/verify": {
+        "post": {
+          "summary": "Verify password reset code",
+          "tags": [
+            "Auth"
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "email",
+                    "code"
+                  ],
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "example": "john.doe@example.com"
+                    },
+                    "code": {
+                      "type": "string",
+                      "example": 123456
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Password reset code verified",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid code or email",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/auth/forgot/recovery": {
+        "post": {
+          "summary": "Recover password",
+          "tags": [
+            "Auth"
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "email",
+                    "password"
+                  ],
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "example": "john.doe@example.com"
+                    },
+                    "password": {
+                      "type": "string",
+                      "description": "New password (must meet requirements)",
+                      "example": "NewPassword123!"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Password recovered successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid input or unverified code",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/auth/provider/email": {
+        "get": {
+          "summary": "Get providers by email",
+          "tags": [
+            "Auth"
+          ],
+          "parameters": [
+            {
+              "in": "query",
+              "name": "email",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "format": "email"
+              },
+              "example": "john.doe@example.com"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "List of providers",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "facebook",
+                            "google",
+                            "apple",
+                            "local"
+                          ]
+                        },
+                        "nullable": true
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "User not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/auth/provider/user": {
+        "get": {
+          "summary": "Get providers by user ID",
+          "tags": [
+            "Auth"
+          ],
+          "parameters": [
+            {
+              "in": "query",
+              "name": "user_id",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "example": "user123"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Provider information",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "$ref": "#/components/schemas/ProviderResponse",
+                        "nullable": true
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "User not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/auth/link/local": {
+        "post": {
+          "summary": "Link local account to social provider",
+          "tags": [
+            "Auth"
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "email",
+                    "provider"
+                  ],
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "example": "john.doe@example.com"
+                    },
+                    "provider": {
+                      "type": "string",
+                      "enum": [
+                        "facebook",
+                        "google",
+                        "apple"
+                      ],
+                      "example": "facebook"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Verification code sent",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Forbidden (e.g., provider already linked)",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/auth/link/local/verify": {
+        "post": {
+          "summary": "Verify linking local account to social provider",
+          "tags": [
+            "Auth"
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "email",
+                    "code",
+                    "provider"
+                  ],
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "example": "john.doe@example.com"
+                    },
+                    "code": {
+                      "type": "string",
+                      "example": 123456
+                    },
+                    "provider": {
+                      "type": "string",
+                      "enum": [
+                        "facebook",
+                        "google",
+                        "apple"
+                      ],
+                      "example": "facebook"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Linking verified successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid code or email",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/auth/link/social": {
+        "post": {
+          "summary": "Link social account to another social provider",
+          "tags": [
+            "Auth"
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "email",
+                    "provider"
+                  ],
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "example": "john.doe@example.com"
+                    },
+                    "provider": {
+                      "type": "string",
+                      "enum": [
+                        "facebook",
+                        "google",
+                        "apple"
+                      ],
+                      "example": "google"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Verification code sent",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Forbidden (e.g., provider already linked)",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/auth/link/social/verify": {
+        "post": {
+          "summary": "Verify linking social account to another social provider",
+          "tags": [
+            "Auth"
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "email",
+                    "code",
+                    "provider"
+                  ],
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "example": "john.doe@example.com"
+                    },
+                    "code": {
+                      "type": "string",
+                      "example": 123456
+                    },
+                    "provider": {
+                      "type": "string",
+                      "enum": [
+                        "facebook",
+                        "google",
+                        "apple"
+                      ],
+                      "example": "google"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Linking verified successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid code or email",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/auth/provider/facebook": {
+        "get": {
+          "summary": "Get providers by Facebook ID",
+          "s": [
+            {
+              "name": "Auth"
+            }
+          ],
+          "parameters": [
+            {
+              "in": "query",
+              "name": "facebook_id",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "example": "fb123456"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "List of providers",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "facebook",
+                            "google",
+                            "apple",
+                            "local"
+                          ]
+                        },
+                        "nullable": true
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "User not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/users/sos": {
+        "post": {
+          "summary": "Send SOS notification to members",
+          "tags": [
+            "User"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "SOS notification sent successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/update-information": {
+        "patch": {
+          "summary": "Update user's name",
+          "tags": [
+            "User"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "example": "John Doe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Name updated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "example": "John Doe"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid input",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/users/upload-avatar": {
+        "patch": {
+          "summary": "Upload user's avatar",
+          "tags": [
+            "User"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "multipart/form-data": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "avatar"
+                  ],
+                  "properties": {
+                    "avatar": {
+                      "type": "string",
+                      "format": "binary",
+                      "description": "Image file for avatar"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Avatar uploaded successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "photo_url": {
+                            "type": "string",
+                            "example": "https://example.com/avatar.jpg"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid file or missing avatar",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/users/change-share-current-location-status": {
+        "patch": {
+          "summary": "Toggle sharing of current location",
+          "tags": [
+            "User"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Location sharing status updated",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/users/share": {
+        "post": {
+          "summary": "Generate a share link for location",
+          "tags": [
+            "User"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "duration"
+                  ],
+                  "properties": {
+                    "duration": {
+                      "type": "number",
+                      "description": "Duration in minutes for share link validity",
+                      "example": 30
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Share link generated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "$ref": "#/components/schemas/ShareLinkResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid input or location sharing disabled",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "delete": {
+          "summary": "Delete share link",
+          "tags": [
+            "User"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Share link deleted successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Share link not found or expired",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "get": {
+          "summary": "Get current share link",
+          "tags": [
+            "User"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Share link retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "$ref": "#/components/schemas/ShareLinkResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Share link not found or expired",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/user": {
+        "delete": {
+          "summary": "Delete user account",
+          "tags": [
+            "User"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Account deleted successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/users/revoke-token": {
+        "post": {
+          "summary": "Revoke user's refresh tokens",
+          "tags": [
+            "User"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Tokens revoked successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/alerts/{zoneId}": {
+        "post": {
+          "summary": "Create a new alert history entry",
+          "tags": [
+            "Alerts"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "zoneId",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "ID of the security zone",
+              "example": "zone123"
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "event",
+                    "timestamp"
+                  ],
+                  "properties": {
+                    "event": {
+                      "type": "string",
+                      "enum": [
+                        "entering",
+                        "leaving"
+                      ],
+                      "description": "Type of alert event",
+                      "example": "entering"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Timestamp of the alert",
+                      "example": "2025-05-15T12:00:00Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Alert history created successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "$ref": "#/components/schemas/AlertHistoryResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid input",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Forbidden (e.g., zone is turned off, location sharing disabled, or condition mismatch)",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "get": {
+          "summary": "Get alert history for a zone",
+          "tags": [
+            "Alerts"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "zoneId",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "ID of the security zone or 'all' for all zones",
+              "example": "zone123"
+            },
+            {
+              "in": "query",
+              "name": "date",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "description": "Date to filter alert history",
+              "example": "2025-05-15T00:00:00Z"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Alert history retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/AlertHistoryResponse"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid input",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/devices": {
+        "post": {
+          "summary": "Add a new device",
+          "tags": [
+            "Devices"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "device_id",
+                    "device_name",
+                    "device_type",
+                    "device_category",
+                    "mac_address",
+                    "is_support_play_sound",
+                    "current_location"
+                  ],
+                  "properties": {
+                    "device_id": {
+                      "type": "string",
+                      "description": "Unique ID of the device",
+                      "example": "device123"
+                    },
+                    "device_name": {
+                      "type": "string",
+                      "description": "Name of the device",
+                      "example": "My iPhone"
+                    },
+                    "device_type": {
+                      "type": "string",
+                      "enum": [
+                        "iPhone",
+                        "iPad",
+                        "MacBook",
+                        "Mac",
+                        "airpods",
+                        "airpods_pro",
+                        "airpods_max",
+                        "sony_headphones",
+                        "bose_headphones",
+                        "jabra_headphones",
+                        "sennheiser_headphones",
+                        "jbl_speaker",
+                        "bose_speaker",
+                        "sony_speaker",
+                        "marshall_speaker",
+                        "ue_boom_speaker",
+                        "apple_watch",
+                        "garmin",
+                        "fitbit",
+                        "xiaomi_mi_band",
+                        "airtag"
+                      ],
+                      "description": "Type of the device",
+                      "example": "iPhone"
+                    },
+                    "device_category": {
+                      "type": "string",
+                      "enum": [
+                        "personal",
+                        "bluetooth_audio",
+                        "wearable",
+                        "iot"
+                      ],
+                      "description": "Category of the device",
+                      "example": "personal"
+                    },
+                    "mac_address": {
+                      "type": "string",
+                      "description": "MAC address of the device",
+                      "example": "00:1A:2B:3C:4D:5E"
+                    },
+                    "is_support_play_sound": {
+                      "type": "boolean",
+                      "description": "Whether the device supports playing sound",
+                      "example": true
+                    },
+                    "current_location": {
+                      "$ref": "#/components/schemas/DeviceLocation",
+                      "description": "Current location of the device"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Device added successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "$ref": "#/components/schemas/Device"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid input",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "get": {
+          "summary": "Get all devices for a user",
+          "tags": [
+            "Devices"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Devices retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/Device"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/devices/{deviceId}": {
+        "delete": {
+          "summary": "Remove a device",
+          "tags": [
+            "Devices"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "deviceId",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "ID of the device to remove",
+              "example": "device123"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Device removed successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/devices/{deviceId}/locations": {
+        "get": {
+          "summary": "Get location history for a device",
+          "tags": [
+            "Devices"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "deviceId",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "ID of the device",
+              "example": "device123"
+            },
+            {
+              "in": "query",
+              "name": "date",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "description": "Date to filter location history (defaults to today)",
+              "example": "2025-05-15T00:00:00Z"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Location history retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/Location"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid date input",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/facebook/deletion": {
+        "post": {
+          "summary": "Handle Facebook data deletion callback",
+          "tags": [
+            "Facebook"
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "signed_request"
+                  ],
+                  "properties": {
+                    "signed_request": {
+                      "type": "string",
+                      "description": "Signed request from Facebook",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZmIxMjM0NTYifQ.signature"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Deletion callback processed successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/DeletionCallback"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid signed request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "get": {
+          "summary": "Check Facebook data deletion status",
+          "tags": [
+            "Facebook"
+          ],
+          "parameters": [
+            {
+              "in": "query",
+              "name": "id",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "Confirmation code for deletion request",
+              "example": 12345678
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Deletion status retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "$ref": "#/components/schemas/DeletionStatus"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid code or no deletion request found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/facebook/limited-user": {
+        "get": {
+          "summary": "Get limited Facebook user data",
+          "tags": [
+            "Facebook"
+          ],
+          "parameters": [
+            {
+              "in": "query",
+              "name": "access_token",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "Facebook access token",
+              "example": "EAA..."
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "User data retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "$ref": "#/components/schemas/FacebookPayloadResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid access token",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/locations": {
+        "get": {
+          "summary": "Get user's current location",
+          "tags": [
+            "Locations"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Current location retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "$ref": "#/components/schemas/UserResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/locations/history": {
+        "get": {
+          "summary": "Get user's location history",
+          "tags": [
+            "Locations"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "query",
+              "name": "date",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "description": "Date to filter location history (defaults to today)",
+              "example": "2025-05-15T00:00:00Z"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Location history retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/Location"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid date input",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/locations/shared/{shareLink}": {
+        "get": {
+          "summary": "Get shared user's location and check link expiration",
+          "tags": [
+            "Locations"
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "shareLink",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "Share link to access the user's location",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Shared location retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "$ref": "#/components/schemas/LocationShareResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Share link expired, invalid, or location not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/locations/autocomplete": {
+        "get": {
+          "summary": "Autocomplete location search using Mapbox",
+          "tags": [
+            "Locations"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "query",
+              "name": "query",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "Search query for location",
+              "example": "123 Main St"
+            },
+            {
+              "in": "query",
+              "name": "language",
+              "required": false,
+              "schema": {
+                "type": "string"
+              },
+              "description": "Language for search results",
+              "example": "en"
+            },
+            {
+              "in": "query",
+              "name": "country",
+              "required": false,
+              "schema": {
+                "type": "string"
+              },
+              "description": "Country code to filter results",
+              "example": "VN"
+            },
+            {
+              "in": "query",
+              "name": "proximity",
+              "required": false,
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "longitude": {
+                    "type": "number",
+                    "example": 106.7009
+                  },
+                  "latitude": {
+                    "type": "number",
+                    "example": 10.7769
+                  }
+                }
+              },
+              "description": "Coordinates to prioritize results near a location"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Autocomplete results retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/AutocompleteResponse"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid query or proximity format",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/members/invite-code": {
+        "post": {
+          "summary": "Create a new invitation code",
+          "tags": [
+            "Members"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "201": {
+              "description": "Invitation code created successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "$ref": "#/components/schemas/InviteCodeResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/members": {
+        "post": {
+          "summary": "Add a member using an invitation code",
+          "tags": [
+            "Members"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "invite_code"
+                  ],
+                  "properties": {
+                    "invite_code": {
+                      "type": "string",
+                      "description": "Invitation code of the inviter",
+                      "example": 123456
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Member added successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "$ref": "#/components/schemas/Member"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid invite code or existing connection",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "get": {
+          "summary": "Get all confirmed members",
+          "tags": [
+            "Members"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Members retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/Member"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/members/connection": {
+        "post": {
+          "summary": "Confirm a connection with a member",
+          "tags": [
+            "Members"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "invited_id"
+                  ],
+                  "properties": {
+                    "invited_id": {
+                      "type": "string",
+                      "description": "ID of the invited user",
+                      "example": "user456"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Connection confirmed successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Existing connection or invalid request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "User has been deleted",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/members/locations/{id}": {
+        "get": {
+          "summary": "Get location history of a member",
+          "tags": [
+            "Members"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "id",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "ID of the member",
+              "example": "user456"
+            },
+            {
+              "in": "query",
+              "name": "date",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "description": "Date to filter location history (defaults to today)",
+              "example": "2025-05-15T00:00:00Z"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Location history retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/Location"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid date input",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/members/{id}": {
+        "get": {
+          "summary": "Get a member's details",
+          "tags": [
+            "Members"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "id",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "ID of the member",
+              "example": "user456"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Member details retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "$ref": "#/components/schemas/Member"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Member not found or connection not confirmed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/members/connection/{invitedId}": {
+        "delete": {
+          "summary": "Reject a connection request",
+          "tags": [
+            "Members"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "invitedId",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "ID of the invited user",
+              "example": "user456"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Connection rejected successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Existing confirmed connection",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/members/{inviterId}": {
+        "delete": {
+          "summary": "Cancel a connection request",
+          "tags": [
+            "Members"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "inviterId",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "ID of the inviter user",
+              "example": "user123"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Connection cancelled successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Existing confirmed connection",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/members/invited": {
+        "get": {
+          "summary": "Get invited members",
+          "tags": [
+            "Members"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Invited members retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "$ref": "#/components/schemas/Member",
+                        "nullable": true
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "User has been deleted",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/members/inviter": {
+        "get": {
+          "summary": "Get pending inviter members",
+          "tags": [
+            "Members"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Inviter members retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/Member"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "User has been deleted",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/members/remove-member/{id}": {
+        "delete": {
+          "summary": "Remove a member connection",
+          "tags": [
+            "Members"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "id",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "ID of the member to remove",
+              "example": "user456"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Member connection removed successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Self-deletion not allowed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "User, member, or connection not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/security/password": {
+        "post": {
+          "summary": "Create a new security password",
+          "tags": [
+            "Security"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "password",
+                    "confirm_password"
+                  ],
+                  "properties": {
+                    "password": {
+                      "type": "string",
+                      "description": "New security password",
+                      "example": "Password123!"
+                    },
+                    "confirm_password": {
+                      "type": "string",
+                      "description": "Confirmation of the new security password",
+                      "example": "Password123!"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Security password creation initiated (verification code sent)",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Passwords do not match or invalid password format",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "Security password already created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/security/password/resend-verification-code": {
+        "post": {
+          "summary": "Resend verification code for security password creation",
+          "description": "Resends the verification code to the user's email if the security password creation is pending confirmation.",
+          "tags": [
+            "Security"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": false
+          },
+          "responses": {
+            "201": {
+              "description": "Verification code resent successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized (e.g., invalid or missing bearer token)",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "Conflict (e.g., user not found or security password not pending confirmation)",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error (e.g., failed to send verification email)",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/security/password/verify": {
+        "post": {
+          "summary": "Verify security password creation with code",
+          "tags": [
+            "Security"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "description": "Verification code sent to email",
+                      "example": 123456
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Security password verified successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid verification code",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/security/password/forgot": {
+        "post": {
+          "summary": "Initiate forgot security password process",
+          "tags": [
+            "Security"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Forgot password process initiated (verification code sent)",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "Security password not created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/security/password/forgot/verify": {
+        "post": {
+          "summary": "Verify forgot security password code",
+          "tags": [
+            "Security"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "description": "Verification code sent to email",
+                      "example": 123456
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Forgot password code verified successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid verification code",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/security/password/forgot/recovery": {
+        "post": {
+          "summary": "Recover security password",
+          "tags": [
+            "Security"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "password",
+                    "confirm_password"
+                  ],
+                  "properties": {
+                    "password": {
+                      "type": "string",
+                      "description": "New security password",
+                      "example": "NewPassword123!"
+                    },
+                    "confirm_password": {
+                      "type": "string",
+                      "description": "Confirmation of the new security password",
+                      "example": "NewPassword123!"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Security password recovered successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Passwords do not match or invalid password format",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Forgot password verification not completed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/security/password/change": {
+        "post": {
+          "summary": "Change security password",
+          "tags": [
+            "Security"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "password",
+                    "old_password"
+                  ],
+                  "properties": {
+                    "password": {
+                      "type": "string",
+                      "description": "New security password",
+                      "example": "NewPassword123!"
+                    },
+                    "old_password": {
+                      "type": "string",
+                      "description": "Current security password",
+                      "example": "OldPassword123!"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Security password changed successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid password format or old password incorrect",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Security password not created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "New password same as old password",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/security/password/is-created": {
+        "get": {
+          "summary": "Check if security password is created",
+          "tags": [
+            "Security"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Security password creation status retrieved",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "$ref": "#/components/schemas/SecurityPasswordResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/security/password/check": {
+        "post": {
+          "summary": "Check if security password is correct",
+          "tags": [
+            "Security"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "password"
+                  ],
+                  "properties": {
+                    "password": {
+                      "type": "string",
+                      "description": "Security password to check",
+                      "example": "Password123!"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Security password verified successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Security password not created or not verified",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "Security password incorrect",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/security-zone": {
+        "post": {
+          "summary": "Create a new security zone",
+          "tags": [
+            "Security Zones"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "zone_name",
+                    "zone_range",
+                    "address",
+                    "latitude",
+                    "longitude",
+                    "alert_condition",
+                    "member_ids"
+                  ],
+                  "properties": {
+                    "zone_name": {
+                      "type": "string",
+                      "description": "Name of the security zone",
+                      "example": "Home Zone"
+                    },
+                    "zone_range": {
+                      "type": "number",
+                      "description": "Radius of the zone in meters (1-1000)",
+                      "example": 100
+                    },
+                    "address": {
+                      "type": "string",
+                      "description": "Address of the zone",
+                      "example": "123 Main St, Hanoi"
+                    },
+                    "latitude": {
+                      "type": "number",
+                      "description": "Latitude coordinate (-90 to 90)",
+                      "example": 10.7769
+                    },
+                    "longitude": {
+                      "type": "number",
+                      "description": "Longitude coordinate (-180 to 180)",
+                      "example": 106.7009
+                    },
+                    "alert_condition": {
+                      "$ref": "#/components/schemas/AlertCondition",
+                      "description": "Condition for triggering alerts"
+                    },
+                    "member_ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "IDs of members to add to the zone",
+                      "example": [
+                        "user456",
+                        "user789"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Security zone created successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "$ref": "#/components/schemas/SecurityZone"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid input or unconfirmed member connection",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Security password not created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Member not found or deleted",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "get": {
+          "summary": "Get all security zones for the user",
+          "tags": [
+            "Security Zones"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Security zones retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/SecurityZone"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/security-zone/{zoneId}": {
+        "get": {
+          "summary": "Get details of a security zone",
+          "tags": [
+            "Security Zones"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "zoneId",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "ID of the security zone",
+              "example": "zone123"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Security zone details retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "$ref": "#/components/schemas/SecurityZoneResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Security zone not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "patch": {
+          "summary": "Update a security zone",
+          "tags": [
+            "Security Zones"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "zoneId",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "ID of the security zone",
+              "example": "zone123"
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "zone_name",
+                    "zone_range",
+                    "address",
+                    "latitude",
+                    "longitude",
+                    "alert_condition",
+                    "member_ids"
+                  ],
+                  "properties": {
+                    "zone_name": {
+                      "type": "string",
+                      "description": "Name of the security zone",
+                      "example": "Home Zone"
+                    },
+                    "zone_range": {
+                      "type": "number",
+                      "description": "Radius of the zone in meters (1-1000)",
+                      "example": 100
+                    },
+                    "address": {
+                      "type": "string",
+                      "description": "Address of the zone",
+                      "example": "123 Main St, Hanoi"
+                    },
+                    "latitude": {
+                      "type": "number",
+                      "description": "Latitude coordinate (-90 to 90)",
+                      "example": 10.7769
+                    },
+                    "longitude": {
+                      "type": "number",
+                      "description": "Longitude coordinate (-180 to 180)",
+                      "example": 106.7009
+                    },
+                    "alert_condition": {
+                      "$ref": "#/components/schemas/AlertCondition",
+                      "description": "Condition for triggering alerts"
+                    },
+                    "member_ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "IDs of members to add to the zone",
+                      "example": [
+                        "user456",
+                        "user789"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Security zone updated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "$ref": "#/components/schemas/SecurityZone"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid input or unconfirmed member connection",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Security zone or member not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "delete": {
+          "summary": "Delete a security zone",
+          "tags": [
+            "Security Zones"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "zoneId",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "ID of the security zone",
+              "example": "zone123"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Security zone deleted successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Security zone not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/security-zone/{zoneId}/enable": {
+        "patch": {
+          "summary": "Toggle enable/disable security zone",
+          "tags": [
+            "Security Zones"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "zoneId",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "ID of the security zone",
+              "example": "zone123"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Security zone toggled successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Security zone not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/security-zone/zones/added": {
+        "get": {
+          "summary": "Get security zones the user was added to",
+          "tags": [
+            "Security Zones"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Added security zones retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse",
+                    "properties": {
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/ZoneResponse"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "tags": [
+      {
+        "name": "Auth",
+        "description": "Authentication and provider management endpoints"
+      },
+      {
+        "name": "User",
+        "description": "User profile and sharing management endpoints"
+      },
+      {
+        "name": "Alerts",
+        "description": "Alert history management endpoints"
+      },
+      {
+        "name": "Devices",
+        "description": "Device management endpoints"
+      },
+      {
+        "name": "Facebook",
+        "description": "Facebook integration endpoints"
+      },
+      {
+        "name": "Locations",
+        "description": "Location management and sharing endpoints"
+      },
+      {
+        "name": "Members",
+        "description": "Member management and connection endpoints"
+      },
+      {
+        "name": "Security",
+        "description": "Security password management endpoints"
+      },
+      {
+        "name": "Security Zones",
+        "description": "Security zone management endpoints"
+      }
+    ]
+  },
+  "customOptions": {}
+};
+  url = options.swaggerUrl || url
+  var urls = options.swaggerUrls
+  var customOptions = options.customOptions
+  var spec1 = options.swaggerDoc
+  var swaggerOptions = {
+    spec: spec1,
+    url: url,
+    urls: urls,
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    presets: [
+      SwaggerUIBundle.presets.apis,
+      SwaggerUIStandalonePreset
+    ],
+    plugins: [
+      SwaggerUIBundle.plugins.DownloadUrl
+    ],
+    layout: "StandaloneLayout"
+  }
+  for (var attrname in customOptions) {
+    swaggerOptions[attrname] = customOptions[attrname];
+  }
+  var ui = SwaggerUIBundle(swaggerOptions)
+
+  if (customOptions.oauth) {
+    ui.initOAuth(customOptions.oauth)
+  }
+
+  if (customOptions.preauthorizeApiKey) {
+    const key = customOptions.preauthorizeApiKey.authDefinitionKey;
+    const value = customOptions.preauthorizeApiKey.apiKeyValue;
+    if (!!key && !!value) {
+      const pid = setInterval(() => {
+        const authorized = ui.preauthorizeApiKey(key, value);
+        if(!!authorized) clearInterval(pid);
+      }, 500)
+
+    }
+  }
+
+  if (customOptions.authAction) {
+    ui.authActions.authorize(customOptions.authAction)
+  }
+
+  window.ui = ui
+}

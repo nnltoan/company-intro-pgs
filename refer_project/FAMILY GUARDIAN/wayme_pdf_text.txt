@@ -1,0 +1,89 @@
+www.wayme.io 
+ 
+ 
+WayMe 
+FREELANCE – Project Contract – LIVE TRACKING  
+WayMe is Your outdoor companion for reaching your destination safely. WayMe drives to 
+become the #1 app in safety, navigation and live tracking. www.wayme.io  
+Role, Objective and Challenge 
+Become our trusted freelance engineer and pioneer to drive our hiking safety and live-
+tracking app combines advanced geofencing, off-route alerts, and real-time location sharing 
+to protect hikers, runners, and outdoor enthusiasts. With a database of curated trails, group 
+tracking features, and safety-first innovations like off route alerts and progress monitoring, 
+WayMe empowers individuals and communities to explore confidently the outdoor.  
+Key tasks 
+Research and develop out of our core technology applicable solutions for the specific 
+requirements and integration in outdoor usage to provide (online and offline) precise 
+location, safety tracking, navigation and orientation guidance and performance data for the 
+users of our platform. Work together with our remote development team.  
+ 
+The specific tasks for LIVE TRACKING are 
+§ Build an integrated service of WayMe and external GPS Tracking partner | 1) replace 
+used GPS trackers with WayMe APP. 2) pair GPS tracker with WayMe to run without 
+phone 
+§ Connect and integrate an existing Live Tracking Service.  
+§ Feed real time location of WayMe users to the service to display on their website 
+§ Provide user data to the service  
+Outcomes 
+§ High-quality integrated platform solutions (stability, usability, functionality) 
+§ System and architecture documentation 
+Knowledge 
+§ Geofencing and GPS technology 
+§ MapBox and map services 
+Competencies 
+§ Being systematic and structured 
+§ Capable to describe situations in detail 
+§ Good in observation 
+§ Self-driven and curious 
+§ Navigation on maps in outdoor 
+ 
+Experiences 
+§ Agile software development / UI/UX – user journeys 
+§ Medium sized project management 
+
+www.wayme.io 
+ 
+ 
+WayMe 
+IT-Skills 
+Frontend Engineering  
+§ Core Stack: React, TypeScript, Tailwind CSS  
+§ Geospatial Visualization: Mapbox GL JS  
+§ Architecture & UX: Component-Driven Development, Responsive Design  
+Backend Systems & Database  
+§ Runtime Environment: Node.js (Express/NestJS)  
+§ Database: MongoDB (NoSQL), Firebase Firestore (Real-time DB)  
+Identity & Access Management (IAM):  
+§ AWS Cognito (User/Identity Pools, Custom Lambda Triggers), JWT Authentication & 
+Authorization  
+System Architecture 
+§ Microservices Pattern, RESTful API Design  
+DevOps, Cloud Infrastructure & CI/CD  
+§ Cloud Provider: AWS Suite (EC2, Lambda, S3, CloudWatch, Cognito)  
+§ Containerization: Docker, Docker Compose  
+§ Pipeline & Observability: Automated CI/CD Pipelines (GitHub Actions/AWS 
+CodePipeline), AWS CloudWatch Monitoring & Logging  
+§ Version Control: Git (Feature Branch Workflow, Pull Requests)  
+The extra mile in outdoor 
+§ Outdoor passionate 
+Other requirements 
+§ Good English 
+§ Flexible work arrangements 
+ 
+Key benefits 
+§ Engage in a high innovative IoT R&D startup and growing company 
+§ Bring your passion for outdoor sports to your workplace 
+§ Learn from Senior Executives to run a startup 
+§ Flexible office, WFH and outdoor workplace and time arrangements 
+Contract 
+§ Project based 
+ 
+For further information, see 
+www.wayme.io 
+https://youtu.be/y2ngo0mXgcY?si=dzO57ozjlgOzqkyt 
+ 
+Candidates 
+§ Submit your resume, references, project examples 
+§ Explain your motivation why you apply for WAYME 
+§ What is your commitment you will bring with you 
+Contact: rainer.duespohl@wayme.io 
